@@ -33,6 +33,10 @@ fn parse_rec(source: &location::Source, lex: &mut Lexer<Token>) -> Result<Vec<Ac
 				let val = &lex.slice()[1..];
 				ActionVal::Literal(Value::Atom(val.into()))
 			}
+			Int => {
+				let val: i32 = lex.slice().parse().unwrap();
+				ActionVal::Literal(Value::Int(val))
+			}
 			GroupStart => {
 				let content = parse_rec(source, lex)?;
 				ActionVal::Group {

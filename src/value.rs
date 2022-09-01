@@ -9,6 +9,7 @@ pub mod list;
 #[derive(Clone)]
 pub enum Value {
 	Atom(String),
+	Int(i32),
 	List(Rc<List>),
 	Function(Rc<Function>)
 }
@@ -32,6 +33,7 @@ impl Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Atom(arg0) => f.debug_tuple("Atom").field(arg0).finish(),
+			Self::Int(val) => write!(f, "{val}"),
             Self::List(arg0) => write!(f, "{:?}", arg0.collect()),
             Self::Function(arg0) => f.debug_tuple("Function").field(arg0).finish(),
         }
