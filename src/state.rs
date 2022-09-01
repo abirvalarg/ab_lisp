@@ -107,6 +107,41 @@ impl State {
 								};
 
 								let func = Self::create_function(&args[..], &content[3..])?;
+								let func = Value::Function(Rc::new(func));
+								self.set_local(name, func.clone());
+								Ok(func)
+							} else {
+								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+							}
+						}
+						ActionVal::Ident(action) if action == "funcap" => {
+							if content.len() >= 5 {
+								let name = if let ActionVal::Ident(name) = &content[1].val {
+									name
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[1].location.clone()));
+								};
+
+								let args = if let ActionVal::Group { content, .. } = &content[2].val {
+									content
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[2].location.clone()));
+								};
+
+								let captures = if let ActionVal::Group { content, .. } = &content[3].val {
+									content
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[3].location.clone()));
+								};
+
+								let mut func = Self::create_function(&args[..], &content[4..])?;
+								for cap in captures {
+									if let ActionVal::Ident(name) = &cap.val {
+										func.captures.insert(name.clone(), self.get_var(name));
+									}
+								}
+
+								let func = Value::Function(Rc::new(func));
 								self.set_local(name, func.clone());
 								Ok(func)
 							} else {
@@ -200,7 +235,7 @@ impl State {
 		}
 	}
 
-	fn create_function(raw_args: &[Action], actions: &[Action]) -> Result<Value, Error> {
+	fn create_function(raw_args: &[Action], actions: &[Action]) -> Result<Function, Error> {
 		let mut args = Vec::with_capacity(raw_args.len());
 		for arg in raw_args {
 			if let ActionVal::Ident(name) = &arg.val {
@@ -210,7 +245,6 @@ impl State {
 			}
 		}
 		let func = Function::lang(actions, args);
-		let func = Value::Function(Rc::new(func));
 		Ok(func)
 	}
 }
