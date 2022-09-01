@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, LinkedList}, rc::Rc, cell::RefCell};
 
-use crate::{prelude, value::{Value, function::FunctionVal, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
+use crate::{prelude, value::{Value, function::{FunctionVal, Function}, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
 
 pub struct State {
 	globals: HashMap<String, Rc<RefCell<Value>>>,
@@ -24,18 +24,25 @@ impl State {
 	}
 
 	pub fn get_var(&mut self, name: &str) -> Rc<RefCell<Value>> {
-		for scope in &self.scope {
-			if let Some(var) = scope.get(name) {
-				return var.clone();
+		match self.get_local(name) {
+			Some(res) => res,
+			None => match self.globals.get(name) {
+				Some(var) => var.clone(),
+				None => {
+					self.globals.insert(name.into(), Value::nil().var());
+					self.globals.get(name).unwrap().clone()
+				} 
 			}
 		}
-		match self.globals.get(name) {
-			Some(var) => var.clone(),
-			None => {
-				self.globals.insert(name.into(), Value::nil().var());
-				self.globals.get(name).unwrap().clone()
-			} 
+	}
+
+	pub fn get_local(&mut self, name: &str) -> Option<Rc<RefCell<Value>>> {
+		for scope in &self.scope {
+			if let Some(var) = scope.get(name) {
+				return Some(var.clone());
+			}
 		}
+		None
 	}
 
 	pub fn set_local(&mut self, name: &str, value: Value) {
@@ -69,15 +76,42 @@ impl State {
 					match &content[0].val {
 						ActionVal::Ident(action) if action == "let" => self.process_let_content(&content[1..]),
 						ActionVal::Ident(action) if action == "set" => self.process_set_content(&content[1..]),
+						ActionVal::Ident(action) if action == "function" => {
+							if content.len() >= 4 {
+								let name = if let ActionVal::Ident(name) = &content[1].val {
+									name
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[1].location.clone()));
+								};
+
+								let args = if let ActionVal::Group { content, .. } = &content[2].val {
+									content
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[2].location.clone()));
+								};
+
+								self.create_function(name, &args[..], &content[3..])
+							} else {
+								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+							}
+						}
 						_ => {
 							let data = self.eval_list(&content[..])?;
 							let func = data.head().unwrap();
-							let args = data.tail().collect();
+							let args = data.tail();
 							match func {
 								Value::Function(func) => {
 									self.scope.push_front(func.captures.clone());
-									let res = match func.val {
-										FunctionVal::Native(func) => func(self, &args[..])
+									let res = match &func.val {
+										FunctionVal::Native(func) => func(self, &args.collect()[..]),
+										FunctionVal::Lang { actions, args: arg_names } => {
+											let mut args = args;
+											for name in arg_names {
+												self.set_local(name, args.head().unwrap_or(&Value::nil()).clone());
+												args = args.tail();
+											}
+											self.execute(actions)
+										}
 									};
 									self.scope.pop_front();
 									res
@@ -146,5 +180,20 @@ impl State {
 		} else {
 			Ok(Value::nil())
 		}
+	}
+
+	fn create_function(&mut self, name: &str, raw_args: &[Action], actions: &[Action]) -> Result<Value, Error> {
+		let mut args = Vec::with_capacity(raw_args.len());
+		for arg in raw_args {
+			if let ActionVal::Ident(name) = &arg.val {
+				args.push(name.clone());
+			} else {
+				return Err(Error::new_at(ErrorKind::Syntax, arg.location.clone()));
+			}
+		}
+		let func = Function::lang(actions, args);
+		let func = Value::Function(Rc::new(func));
+		self.set_local(name, func.clone());
+		Ok(func)
 	}
 }

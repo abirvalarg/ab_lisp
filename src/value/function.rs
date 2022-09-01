@@ -1,6 +1,6 @@
 use std::{fmt::{self, Debug}, collections::HashMap, rc::Rc, cell::RefCell};
 
-use crate::{state::State, error::Error};
+use crate::{state::State, error::Error, action::Action};
 
 use super::Value;
 
@@ -19,16 +19,31 @@ impl Function {
 			captures: HashMap::new(),
 		}
 	}
+
+	pub fn lang(actions: &[Action], args: Vec<String>) -> Self {
+		Function {
+			val: FunctionVal::Lang {
+				actions: actions.into(),
+				args
+			},
+			captures: HashMap::new()
+		}
+	}
 }
 
 pub enum FunctionVal {
-	Native(NativeFunction)
+	Native(NativeFunction),
+	Lang {
+		actions: Vec<Action>,
+		args: Vec<String>
+	}
 }
 
 impl Debug for FunctionVal {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
-			FunctionVal::Native(_) => write!(f, "<native function>")
+			FunctionVal::Native(_) => write!(f, "<native function>"),
+			&FunctionVal::Lang { .. } => write!(f, "<function>")
 		}
 	}
 }

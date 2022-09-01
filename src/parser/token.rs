@@ -29,5 +29,6 @@ pub enum Token {
 
 	#[error]
 	#[regex("\\s", logos::skip)]
+	#[regex("#.*\n", logos::skip)]
 	Error
 }
