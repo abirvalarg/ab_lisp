@@ -19,7 +19,7 @@ pub enum Value {
 	String(String),
 	List(Rc<List>),
 	Function(Rc<Function>),
-	Object(Rc<HashMap<String, Rc<Function>>>)
+	Object(Rc<HashMap<String, Rc<RefCell<Value>>>>)
 }
 
 impl Value {
@@ -78,7 +78,7 @@ impl Value {
 				if let Value::Atom(method) = method {
 					match object.get(method) {
 						Some(method) => {
-							Value::Function(method.clone()).call(abl, args.tail(), loc)
+							method.borrow().call(abl, args.tail(), loc)
 						}
 						None => Err(Error::new_at(crate::error::ErrorKind::NotAFunction, loc.clone()))
 					}

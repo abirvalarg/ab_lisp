@@ -160,9 +160,10 @@ impl State {
 							let mut object = HashMap::new();
 							for item in &content[1..] {
 								if let ActionVal::Ident(name) = &item.val {
-									if let Value::Function(method) = &*self.get_var(name).borrow() {
-										object.insert(name.clone(), method.clone());
-									}
+									let var = self.get_var(name);
+									object.insert(name.into(), var);
+								} else {
+									return Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()));
 								}
 							}
 							Ok(Value::Object(Rc::new(object)))
