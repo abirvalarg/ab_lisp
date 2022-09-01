@@ -58,6 +58,20 @@ impl Display for Error {
 				}
 				None => write!(f, "Attempt to call a non-function value")
 			}
+			BadIndex => match &self.location {
+				Some(loc) => {
+					let mut buf: Vec<u8> = Vec::new();
+					let src = match &loc.source {
+						location::Source::File(path) => std::fs::read_to_string(path).unwrap()
+					};
+					ariadne::Report::build(ariadne::ReportKind::Error, (), loc.span.start())
+						.with_label(Label::new(loc.span.clone()).with_message("Attempt to index an object with non-atom value"))
+						.finish()
+						.write(Source::from(src), &mut buf).unwrap();
+					write!(f, "{}", String::from_utf8(buf).unwrap())
+				}
+				None => write!(f, "Attempt to index an object with non-atom value")
+			}
 		}
 	}
 }
@@ -69,5 +83,6 @@ pub enum ErrorKind {
 	File(String),
 	Usage,
 	Syntax,
-	NotAFunction
+	NotAFunction,
+	BadIndex
 }

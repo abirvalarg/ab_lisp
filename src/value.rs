@@ -1,8 +1,10 @@
-use std::{rc::Rc, cell::RefCell, fmt::{self, Debug}, f64::NAN};
+use std::{rc::Rc, cell::RefCell, fmt::{self, Debug}, f64::NAN, collections::HashMap};
 
 use function::Function;
 use list::List;
 use number::Number;
+
+use crate::{state::State, error::Error, location::Location};
 
 use self::function::NativeFunction;
 
@@ -16,7 +18,8 @@ pub enum Value {
 	Number(Number),
 	String(String),
 	List(Rc<List>),
-	Function(Rc<Function>)
+	Function(Rc<Function>),
+	Object(Rc<HashMap<String, Rc<Function>>>)
 }
 
 impl Value {
@@ -50,6 +53,42 @@ impl Value {
 			_ => format!("{self:?}")
 		}
 	}
+
+	pub fn call(&self, abl: &mut State, args: Rc<List>, loc: &Location) -> Result<Value, Error> {
+		use function::FunctionVal;
+		match self {
+			Value::Function(func) => {
+				abl.push_scope(func.captures.clone());
+				let res = match &func.val {
+					FunctionVal::Native(func) => func(abl, &args.collect()[..]),
+					FunctionVal::Lang { actions, args: arg_names } => {
+						let mut args = args;
+						for name in arg_names {
+							abl.set_local(name, args.head().unwrap_or(&Value::nil()).clone());
+							args = args.tail();
+						}
+						abl.execute(actions)
+					}
+				};
+				abl.pop_scope();
+				res
+			}
+			Value::Object(object) if !args.is_nil() => {
+				let method = args.head().unwrap();
+				if let Value::Atom(method) = method {
+					match object.get(method) {
+						Some(method) => {
+							Value::Function(method.clone()).call(abl, args.tail(), loc)
+						}
+						None => Err(Error::new_at(crate::error::ErrorKind::NotAFunction, loc.clone()))
+					}
+				} else {
+					Err(Error::new_at(crate::error::ErrorKind::BadIndex, loc.clone()))
+				}
+			}
+			_ => Err(Error::new_at(crate::error::ErrorKind::NotAFunction, loc.clone()))
+		}
+	}
 }
 
 impl Into<bool> for Value {
@@ -74,6 +113,7 @@ impl Debug for Value {
             Self::String(arg0) => f.debug_tuple("String").field(arg0).finish(),
             Self::List(arg0) => write!(f, "{:?}", arg0.collect()),
             Self::Function(arg0) => f.debug_tuple("Function").field(arg0).finish(),
+            Self::Object(arg0) => f.debug_tuple("Object").field(arg0).finish(),
         }
     }
 }

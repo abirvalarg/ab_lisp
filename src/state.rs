@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, LinkedList}, rc::Rc, cell::RefCell};
 
-use crate::{prelude, value::{Value, function::{FunctionVal, Function}, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
+use crate::{prelude, value::{Value, function::Function, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
 
 pub struct State {
 	globals: HashMap<String, Rc<RefCell<Value>>>,
@@ -54,6 +54,14 @@ impl State {
 			Some(scope) => scope.insert(name.into(), value),
 			None => self.globals.insert(name.into(), value)
 		};
+	}
+
+	pub(crate) fn push_scope(&mut self, scope: HashMap<String, Rc<RefCell<Value>>>) {
+		self.scope.push_front(scope);
+	}
+
+	pub(crate) fn pop_scope(&mut self) {
+		self.scope.pop_front();
 	}
 
 	pub fn execute(&mut self, actions: &[Action]) -> Result<Value, Error> {
@@ -148,29 +156,22 @@ impl State {
 								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
 							}
 						}
+						ActionVal::Ident(action) if action == "object" => {
+							let mut object = HashMap::new();
+							for item in &content[1..] {
+								if let ActionVal::Ident(name) = &item.val {
+									if let Value::Function(method) = &*self.get_var(name).borrow() {
+										object.insert(name.clone(), method.clone());
+									}
+								}
+							}
+							Ok(Value::Object(Rc::new(object)))
+						}
 						_ => {
 							let data = self.eval_list(&content[..])?;
 							let func = data.head().unwrap();
 							let args = data.tail();
-							match func {
-								Value::Function(func) => {
-									self.scope.push_front(func.captures.clone());
-									let res = match &func.val {
-										FunctionVal::Native(func) => func(self, &args.collect()[..]),
-										FunctionVal::Lang { actions, args: arg_names } => {
-											let mut args = args;
-											for name in arg_names {
-												self.set_local(name, args.head().unwrap_or(&Value::nil()).clone());
-												args = args.tail();
-											}
-											self.execute(actions)
-										}
-									};
-									self.scope.pop_front();
-									res
-								}
-								_ => Err(Error::new_at(ErrorKind::NotAFunction, content[0].location.clone()))
-							}
+							func.call(self, args, &content[0].location)
 						}
 					}
 				}
