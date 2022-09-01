@@ -17,6 +17,7 @@ impl State {
 
 	pub fn reg_prelude(&mut self) {
 		self.globals.insert("debug".into(), Value::native_function(prelude::debug).var());
+		self.globals.insert("put-str".into(), Value::native_function(prelude::put_str).var());
 		self.globals.insert("+".into(), Value::native_function(prelude::add).var());
 		self.globals.insert("-".into(), Value::native_function(prelude::sub).var());
 		self.globals.insert("*".into(), Value::native_function(prelude::mul).var());

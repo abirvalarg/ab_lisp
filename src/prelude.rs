@@ -7,6 +7,13 @@ pub fn debug(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
 	Ok(Value::nil())
 }
 
+pub fn put_str(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
+	for arg in args {
+		print!("{}", arg.to_string());
+	}
+	Ok(Value::nil())
+}
+
 pub fn add(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
 	let mut sum = Number::Int(0);
 	for arg in args {

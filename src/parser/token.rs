@@ -15,6 +15,10 @@ pub enum Token {
 	#[regex(r#"-?\d+\.\d*"#)]
 	Float,
 
+	// #[regex(r#""([^"]|\\.)*""#)]
+	#[regex(r#""([^\\"]|\\[nrt\\0'"]|\\x[0-9a-f][0-9a-f])*""#)]
+	String,
+
 	#[token("(")]
 	GroupStart,
 
@@ -23,9 +27,6 @@ pub enum Token {
 
 	#[token("'(")]
 	ListStart,
-
-	// #[token("()")]
-	// Nil,
 
 	#[error]
 	#[regex("\\s", logos::skip)]

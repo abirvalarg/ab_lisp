@@ -41,6 +41,10 @@ fn parse_rec(source: &location::Source, lex: &mut Lexer<Token>) -> Result<Vec<Ac
 				let val = lex.slice().parse().unwrap();
 				ActionVal::Literal(Value::Number(Number::Float(val)))
 			}
+			String => {
+				let val = enquote::unquote(lex.slice()).unwrap();
+				ActionVal::Literal(Value::String(val))
+			}
 			GroupStart => {
 				let content = parse_rec(source, lex)?;
 				ActionVal::Group {
@@ -56,9 +60,6 @@ fn parse_rec(source: &location::Source, lex: &mut Lexer<Token>) -> Result<Vec<Ac
 			GroupEnd => {
 				return Ok(res);
 			}
-			// Nil => {
-			// 	ActionVal::Literal(Value::nil())
-			// }
 			Error => {
 				return Err(crate::error::Error::new_at(ErrorKind::Syntax, location));
 			}

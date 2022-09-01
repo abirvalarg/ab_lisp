@@ -14,6 +14,7 @@ pub mod number;
 pub enum Value {
 	Atom(String),
 	Number(Number),
+	String(String),
 	List(Rc<List>),
 	Function(Rc<Function>)
 }
@@ -42,6 +43,13 @@ impl Value {
 			_ => Number::Float(NAN)
 		}
 	}
+
+	pub fn to_string(&self) -> String {
+		match self {
+			Value::String(val) => val.clone(),
+			_ => format!("{self:?}")
+		}
+	}
 }
 
 impl Into<bool> for Value {
@@ -63,6 +71,7 @@ impl Debug for Value {
             Self::Atom(arg0) => f.debug_tuple("Atom").field(arg0).finish(),
 			Self::Number(Number::Int(num)) => write!(f, "{num}"),
 			Self::Number(Number::Float(num)) => write!(f, "{num}"),
+            Self::String(arg0) => f.debug_tuple("String").field(arg0).finish(),
             Self::List(arg0) => write!(f, "{:?}", arg0.collect()),
             Self::Function(arg0) => f.debug_tuple("Function").field(arg0).finish(),
         }
