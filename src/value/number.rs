@@ -8,6 +8,18 @@ pub enum Number {
 	Float(f64)
 }
 
+impl From<i64> for Number {
+	fn from(val: i64) -> Self {
+		Number::Int(val)
+	}
+}
+
+impl From<f64> for Number {
+	fn from(val: f64) -> Self {
+		Number::Float(val)
+	}
+}
+
 impl Add for Number {
 	type Output = Self;
 
@@ -82,4 +94,26 @@ impl DivAssign for Number {
 	fn div_assign(&mut self, rhs: Self) {
 		*self = *self / rhs;
 	}
+}
+
+impl PartialEq for Number {
+	fn eq(&self, other: &Self) -> bool {
+		match (*self, *other) {
+			(Int(left), Int(right)) => left == right,
+			(Int(left), Float(right)) => left as f64 == right,
+			(Float(left), Int(right)) => left == right as f64,
+			(Float(left), Float(right)) => left == right
+		}
+	}
+}
+
+impl PartialOrd for Number {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		match (*self, *other) {
+			(Int(left), Int(right)) => left.partial_cmp(&right),
+			(Int(left), Float(right)) => (left as f64).partial_cmp(&right),
+			(Float(left), Int(right)) => left.partial_cmp(&(right as f64)),
+			(Float(left), Float(right)) => left.partial_cmp(&right)
+		}
+    }
 }

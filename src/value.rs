@@ -44,6 +44,19 @@ impl Value {
 	}
 }
 
+impl Into<bool> for Value {
+	fn into(self) -> bool {
+		match self {
+			Value::List(list) => !list.is_nil(),
+			Value::Number(num) => match num {
+				Number::Int(x) => x != 0,
+				Number::Float(x) =>  x != 0.
+			},
+			_ => true
+		}
+	}
+}
+
 impl Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

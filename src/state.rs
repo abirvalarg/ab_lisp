@@ -22,6 +22,7 @@ impl State {
 		self.globals.insert("*".into(), Value::native_function(prelude::mul).var());
 		self.globals.insert("/".into(), Value::native_function(prelude::div).var());
 		self.globals.insert("sqrt".into(), Value::native_function(prelude::sqrt).var());
+		self.globals.insert(">=".into(), Value::native_function(prelude::ge).var());
 	}
 
 	pub fn get_var(&mut self, name: &str) -> Rc<RefCell<Value>> {
@@ -75,8 +76,21 @@ impl State {
 					Ok(Value::nil())
 				} else {
 					match &content[0].val {
+						ActionVal::Ident(action) if action == "do" => self.execute(&content[1..]),
 						ActionVal::Ident(action) if action == "let" => self.process_let_content(&content[1..]),
 						ActionVal::Ident(action) if action == "set" => self.process_set_content(&content[1..]),
+						ActionVal::Ident(action) if action == "if" => {
+							if content.len() == 4 {
+								let cond = self.eval(&content[1])?;
+								if cond.into() {
+									self.eval(&content[2])
+								} else {
+									self.eval(&content[3])
+								}
+							} else {
+								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+							}
+						}
 						ActionVal::Ident(action) if action == "function" => {
 							if content.len() >= 4 {
 								let name = if let ActionVal::Ident(name) = &content[1].val {
@@ -91,7 +105,9 @@ impl State {
 									return Err(Error::new_at(ErrorKind::Syntax, content[2].location.clone()));
 								};
 
-								self.create_function(name, &args[..], &content[3..])
+								let func = Self::create_function(&args[..], &content[3..])?;
+								self.set_local(name, func.clone());
+								Ok(func)
 							} else {
 								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
 							}
@@ -183,7 +199,7 @@ impl State {
 		}
 	}
 
-	fn create_function(&mut self, name: &str, raw_args: &[Action], actions: &[Action]) -> Result<Value, Error> {
+	fn create_function(raw_args: &[Action], actions: &[Action]) -> Result<Value, Error> {
 		let mut args = Vec::with_capacity(raw_args.len());
 		for arg in raw_args {
 			if let ActionVal::Ident(name) = &arg.val {
@@ -194,7 +210,6 @@ impl State {
 		}
 		let func = Function::lang(actions, args);
 		let func = Value::Function(Rc::new(func));
-		self.set_local(name, func.clone());
 		Ok(func)
 	}
 }

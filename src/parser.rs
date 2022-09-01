@@ -56,9 +56,9 @@ fn parse_rec(source: &location::Source, lex: &mut Lexer<Token>) -> Result<Vec<Ac
 			GroupEnd => {
 				return Ok(res);
 			}
-			Nil => {
-				ActionVal::Literal(Value::nil())
-			}
+			// Nil => {
+			// 	ActionVal::Literal(Value::nil())
+			// }
 			Error => {
 				return Err(crate::error::Error::new_at(ErrorKind::Syntax, location));
 			}

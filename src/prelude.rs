@@ -60,3 +60,11 @@ pub fn sqrt(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
 		Ok(Value::Number(Number::Float(1.)))
 	}
 }
+
+pub fn ge(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
+	match args.len() {
+		0 => Ok(Value::Number(0.into())),
+		1 => Ok(Value::Number( (if args[0].to_number() >= 0.into() { 1 } else { 0 }).into() )),
+		_ => Ok(Value::Number( (if args[0].to_number() >= args[1].to_number() { 1 } else { 0 }).into() ))
+	}
+}
