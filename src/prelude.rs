@@ -16,7 +16,9 @@ pub fn add(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
 }
 
 pub fn sub(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
-	if args.len() > 0 {
+	if args.len() == 1 {
+		Ok(Value::Number(Number::Int(0) - args[0].to_number()))
+	} else if args.len() > 0 {
 		let mut res = args[0].to_number();
 		for arg in &args[1..] {
 			res -= arg.to_number();
