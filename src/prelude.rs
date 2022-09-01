@@ -46,3 +46,15 @@ pub fn div(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
 		Ok(Value::Number(Number::Int(1)))
 	}
 }
+
+pub fn sqrt(_abl: &mut State, args: &[Value]) -> Result<Value, Error> {
+	if args.len() > 0 {
+		let x = match args[0].to_number() {
+			Number::Int(x) => x as f64,
+			Number::Float(x) => x
+		};
+		Ok(Value::Number(Number::Float(x.sqrt())))
+	} else {
+		Ok(Value::Number(Number::Float(1.)))
+	}
+}

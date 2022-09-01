@@ -21,6 +21,7 @@ impl State {
 		self.globals.insert("-".into(), Value::native_function(prelude::sub).var());
 		self.globals.insert("*".into(), Value::native_function(prelude::mul).var());
 		self.globals.insert("/".into(), Value::native_function(prelude::div).var());
+		self.globals.insert("sqrt".into(), Value::native_function(prelude::sqrt).var());
 	}
 
 	pub fn get_var(&mut self, name: &str) -> Rc<RefCell<Value>> {
