@@ -12,4 +12,4 @@
 )
 
 (let a (Vec 4 10))
-(put-str "Vector {" (a'x) "; " (a y) "} has length " (a'len) "\n")
+(put-str "Vector {" (a'x) "; " (a'y) "} has length " (a'len) "\n")
