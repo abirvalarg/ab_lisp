@@ -1,6 +1,6 @@
 use logos::{Logos, Lexer};
 
-use crate::{action::{Action, ActionVal}, error::{Error, ErrorKind}, location::{self, Location}, value::Value};
+use crate::{action::{Action, ActionVal}, error::{Error, ErrorKind}, location::{self, Location}, value::{Value, number::Number}};
 
 use self::token::Token;
 
@@ -34,8 +34,12 @@ fn parse_rec(source: &location::Source, lex: &mut Lexer<Token>) -> Result<Vec<Ac
 				ActionVal::Literal(Value::Atom(val.into()))
 			}
 			Int => {
-				let val: i32 = lex.slice().parse().unwrap();
-				ActionVal::Literal(Value::Int(val))
+				let val = lex.slice().parse().unwrap();
+				ActionVal::Literal(Value::Number(Number::Int(val)))
+			}
+			Float => {
+				let val = lex.slice().parse().unwrap();
+				ActionVal::Literal(Value::Number(Number::Float(val)))
 			}
 			GroupStart => {
 				let content = parse_rec(source, lex)?;

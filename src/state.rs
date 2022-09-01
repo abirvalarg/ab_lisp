@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, LinkedList}, rc::Rc, cell::RefCell};
 
-use crate::{prelude, value::{Value, function::{Function, FunctionVal}, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
+use crate::{prelude, value::{Value, function::FunctionVal, list::List}, action::{Action, ActionVal}, error::{Error, ErrorKind}};
 
 pub struct State {
 	globals: HashMap<String, Rc<RefCell<Value>>>,
@@ -16,11 +16,11 @@ impl State {
 	}
 
 	pub fn reg_prelude(&mut self) {
-		let test = Value::Function(Rc::new(Function::native(prelude::test)));
-		self.globals.insert("test".into(), test.var());
-
-		let debug = Value::Function(Rc::new(Function::native(prelude::debug)));
-		self.globals.insert("debug".into(), debug.var());
+		self.globals.insert("debug".into(), Value::native_function(prelude::debug).var());
+		self.globals.insert("+".into(), Value::native_function(prelude::add).var());
+		self.globals.insert("-".into(), Value::native_function(prelude::sub).var());
+		self.globals.insert("*".into(), Value::native_function(prelude::mul).var());
+		self.globals.insert("/".into(), Value::native_function(prelude::div).var());
 	}
 
 	pub fn get_var(&mut self, name: &str) -> Rc<RefCell<Value>> {
