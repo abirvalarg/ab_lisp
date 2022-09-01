@@ -48,6 +48,7 @@ impl List {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn is_nil(&self) -> bool {
 		match self {
 			List::Nil => true,

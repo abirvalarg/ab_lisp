@@ -70,7 +70,7 @@ impl Div for Number {
 
 	fn div(self, rhs: Self) -> Self::Output {
 		match (self, rhs) {
-			(Int(left), Int(right)) => Int(left / right),
+			(Int(left), Int(right)) => Float(left as f64 / right as f64),
 			(Int(left), Float(right)) => Float(left as f64 / right),
 			(Float(left), Int(right)) => Float(left / right as f64),
 			(Float(left), Float(right)) => Float(left / right)

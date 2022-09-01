@@ -38,6 +38,14 @@ impl State {
 		}
 	}
 
+	pub fn set_local(&mut self, name: &str, value: Value) {
+		let value = value.var();
+		match self.scope.front_mut() {
+			Some(scope) => scope.insert(name.into(), value),
+			None => self.globals.insert(name.into(), value)
+		};
+	}
+
 	pub fn execute(&mut self, actions: &[Action]) -> Result<Value, Error> {
 		let mut ret = Value::nil();
 		for action in actions {
@@ -55,21 +63,29 @@ impl State {
 				Ok(Value::List(content))
 			}
 			ActionVal::Group { content, quoted: false } => {
-				let data = self.eval_list(&content[..])?;
-				if data.is_nil() {
-					Ok(Value::List(data))
+				if content.len() == 0 {
+					Ok(Value::nil())
 				} else {
-					let func = data.head().unwrap();
-					let args = data.tail().collect();
-					self.scope.push_front(HashMap::new());
-					let res = match func {
-						Value::Function(func) => match &func.val {
-							FunctionVal::Native(func) => func(self, &args[..])
+					match &content[0].val {
+						ActionVal::Ident(action) if action == "let" => self.process_let_content(&content[1..]),
+						ActionVal::Ident(action) if action == "set" => self.process_set_content(&content[1..]),
+						_ => {
+							let data = self.eval_list(&content[..])?;
+							let func = data.head().unwrap();
+							let args = data.tail().collect();
+							match func {
+								Value::Function(func) => {
+									self.scope.push_front(func.captures.clone());
+									let res = match func.val {
+										FunctionVal::Native(func) => func(self, &args[..])
+									};
+									self.scope.pop_front();
+									res
+								}
+								_ => Err(Error::new_at(ErrorKind::NotAFunction, content[0].location.clone()))
+							}
 						}
-						_ => Err(Error::new_at(ErrorKind::NotAFunction, content[0].location.clone()))
-					};
-					self.scope.pop_front();
-					res
+					}
 				}
 			}
 		}
@@ -82,6 +98,53 @@ impl State {
 			let val = self.eval(&actions[0])?;
 			let next = self.eval_list(&actions[1..])?;
 			Ok(next.push_front(val))
+		}
+	}
+
+	fn process_let_content(&mut self, content: &[Action]) -> Result<Value, Error> {
+		if content.len() > 0 {
+			match &content[0].val {
+				ActionVal::Ident(name) => {
+					let value = if content.len() >= 2 {
+						self.eval(&content[1])?
+					} else {
+						Value::nil()
+					};
+					self.set_local(name, value.clone());
+					if content.len() > 2 {
+						self.process_let_content(&content[2..])
+					} else {
+						Ok(value)
+					}
+				}
+				_ => Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+			}
+		} else {
+			Ok(Value::nil())
+		}
+	}
+
+	fn process_set_content(&mut self, content: &[Action]) -> Result<Value, Error> {
+		if content.len() > 0 {
+			match &content[0].val {
+				ActionVal::Ident(name) => {
+					let value = if content.len() >= 2 {
+						self.eval(&content[1])?
+					} else {
+						Value::nil()
+					};
+					let var = self.get_var(name);
+					*var.borrow_mut() = value.clone();
+					if content.len() > 2 {
+						self.process_let_content(&content[2..])
+					} else {
+						Ok(value)
+					}
+				}
+				_ => Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+			}
+		} else {
+			Ok(Value::nil())
 		}
 	}
 }
