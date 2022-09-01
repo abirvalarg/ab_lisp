@@ -7,7 +7,13 @@
 	)
 )
 
-(let c (create))
-(put-str (c) "\n")
-(put-str (c) "\n")
-(put-str (c) "\n")
+(let
+	c1 (create)
+	c2 (create)
+)
+(put-str (c1) "\n")
+(put-str (c2) "\n")
+(put-str (c1) "\n")
+(put-str (c2) "\n")
+(put-str (c1) "\n")
+(put-str (c2) "\n")
