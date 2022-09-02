@@ -108,6 +108,16 @@ impl State {
 								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
 							}
 						}
+						ActionVal::Ident(action) if action == "while" => {
+							if content.len() == 3 {
+								while self.eval(&content[1])?.into() {
+									self.execute(&content[2..])?;
+								}
+								Ok(Value::nil())
+							} else {
+								Err(Error::new_at(ErrorKind::Syntax, content[0].location.clone()))
+							}
+						}
 						ActionVal::Ident(action) if action == "function" => {
 							if content.len() >= 4 {
 								let name = if let ActionVal::Ident(name) = &content[1].val {
