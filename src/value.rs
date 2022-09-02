@@ -107,13 +107,27 @@ impl Into<bool> for Value {
 impl Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Atom(arg0) => f.debug_tuple("Atom").field(arg0).finish(),
+			Self::Atom(atom) => write!(f, "'{atom}"),
 			Self::Number(Number::Int(num)) => write!(f, "{num}"),
 			Self::Number(Number::Float(num)) => write!(f, "{num}"),
             Self::String(arg0) => f.debug_tuple("String").field(arg0).finish(),
             Self::List(arg0) => write!(f, "{:?}", arg0.collect()),
             Self::Function(arg0) => f.debug_tuple("Function").field(arg0).finish(),
             Self::Object(arg0) => f.debug_tuple("Object").field(arg0).finish(),
+        }
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Atom(l0), Self::Atom(r0)) => l0 == r0,
+            (Self::Number(l0), Self::Number(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::List(l0), Self::List(r0)) => l0 == r0,
+            (Self::Function(l0), Self::Function(r0)) => Rc::ptr_eq(l0, r0),
+            (Self::Object(l0), Self::Object(r0)) => l0 == r0,
+			_ => false
         }
     }
 }

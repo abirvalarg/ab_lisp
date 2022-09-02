@@ -16,4 +16,4 @@
 )
 
 (let a (Object (Vec 3 10)))
-(put-str (a'pos'x) "\n")
+(print (a'pos'x) "\n")

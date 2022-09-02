@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::Value;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum List {
 	Nil,
 	Item {

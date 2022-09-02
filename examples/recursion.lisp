@@ -1,8 +1,8 @@
 (function rec (stop)
 	(if stop
-		(put-str "stopping recursion\n")
+		(print "stopping recursion\n")
 		(do
-			(put-str "recursion!!!\n")
+			(print "recursion!!!\n")
 			(rec 1)
 		)
 	)

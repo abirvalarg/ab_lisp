@@ -1,7 +1,7 @@
 ; ax² + bx + c = 0
 (function solve (a b c)
 	(let d (- (* b b) (* 4 a c)) )
-	(if (>= d 0)
+	(if (>= d)
 		(do
 			(let sqrt-d (sqrt d) )
 			'(

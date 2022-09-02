@@ -17,12 +17,20 @@ impl State {
 
 	pub fn reg_prelude(&mut self) {
 		self.globals.insert("debug".into(), Value::native_function(prelude::debug).var());
-		self.globals.insert("put-str".into(), Value::native_function(prelude::put_str).var());
+		self.globals.insert("print".into(), Value::native_function(prelude::print).var());
+		self.globals.insert("head".into(), Value::native_function(prelude::head).var());
+		self.globals.insert("tail".into(), Value::native_function(prelude::tail).var());
+		self.globals.insert("cons".into(), Value::native_function(prelude::cons).var());
 		self.globals.insert("+".into(), Value::native_function(prelude::add).var());
 		self.globals.insert("-".into(), Value::native_function(prelude::sub).var());
 		self.globals.insert("*".into(), Value::native_function(prelude::mul).var());
 		self.globals.insert("/".into(), Value::native_function(prelude::div).var());
 		self.globals.insert("sqrt".into(), Value::native_function(prelude::sqrt).var());
+		self.globals.insert("=".into(), Value::native_function(prelude::eq).var());
+		self.globals.insert("/=".into(), Value::native_function(prelude::ne).var());
+		self.globals.insert("<".into(), Value::native_function(prelude::lt).var());
+		self.globals.insert("<=".into(), Value::native_function(prelude::le).var());
+		self.globals.insert(">".into(), Value::native_function(prelude::gt).var());
 		self.globals.insert(">=".into(), Value::native_function(prelude::ge).var());
 	}
 
